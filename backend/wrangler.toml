@@ -1,0 +1,38 @@
+name = "parently-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "parently-db"
+database_id = "your-database-id-here"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "parently-db-staging"
+database_id = "your-staging-database-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-staging-kv-namespace-id-here"
+
+[env.production.vars]
+JWT_SECRET = "your-production-jwt-secret"
+ENCRYPTION_KEY = "your-production-encryption-key"
+ANTHROPIC_API_KEY = "your-anthropic-api-key"
+
+[env.staging.vars]
+JWT_SECRET = "your-staging-jwt-secret"
+ENCRYPTION_KEY = "your-staging-encryption-key"
+ANTHROPIC_API_KEY = "your-anthropic-api-key" 

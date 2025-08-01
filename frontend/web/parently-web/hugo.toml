@@ -1,0 +1,71 @@
+baseURL = 'https://parently.live/'
+languageCode = 'bg-bg'
+title = 'Parently - AI Асистент за Родители'
+theme = 'parently-theme'
+
+[params]
+  description = "AI асистент за родители и семейни финанси - помогнете на семейството си да живее по-добре"
+  author = "Parently Team"
+  apiBaseUrl = "https://api.parently.live"
+  version = "1.0.0"
+
+[params.features]
+  enableAnalytics = true
+  enableNotifications = true
+  enableOffline = true
+
+[params.social]
+  facebook = "https://facebook.com/parently"
+  twitter = "https://twitter.com/parently"
+  instagram = "https://instagram.com/parently"
+
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "Начало"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    identifier = "checkin"
+    name = "Check-in"
+    url = "/checkin/"
+    weight = 2
+  [[menu.main]]
+    identifier = "plan"
+    name = "План"
+    url = "/plan/"
+    weight = 3
+  [[menu.main]]
+    identifier = "chat"
+    name = "Чат"
+    url = "/chat/"
+    weight = 4
+  [[menu.main]]
+    identifier = "finance"
+    name = "Финанси"
+    url = "/finance/"
+    weight = 5
+  [[menu.main]]
+    identifier = "kids"
+    name = "Детски акаунт"
+    url = "/kids/"
+    weight = 6
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[outputFormats]
+  [outputFormats.JSON]
+    mediaType = "application/json"
+    baseName = "index"
+    isPlainText = true
+    notAlternative = true
+
+[security]
+  [security.exec]
+    allow = ['^dart-sass-embedded$', '^go$', '^npx$', '^postcss$', '^babel$']

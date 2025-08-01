@@ -1,0 +1,29 @@
+{
+  "name": "parently-api",
+  "version": "1.0.0",
+  "description": "AI assistant for parents and family finances",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply parently-db",
+    "db:create": "wrangler d1 create parently-db",
+    "kv:create": "wrangler kv:namespace create PARENTLY_CACHE"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241120.0",
+    "zod": "^3.22.4",
+    "jsonwebtoken": "^9.0.2",
+    "crypto-js": "^4.2.0",
+    "itty-router": "^4.0.27"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.1",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/crypto-js": "^4.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

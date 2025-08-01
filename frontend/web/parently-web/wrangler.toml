@@ -1,0 +1,31 @@
+name = "parently-web"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[site]
+bucket = "./public"
+
+[build]
+command = "hugo --minify"
+watch_dir = "content"
+
+[env.production]
+name = "parently-web"
+route = "parently.live/*"
+
+[env.staging]
+name = "parently-web-staging"
+route = "staging.parently.live/*"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[env.production.vars]
+HUGO_ENV = "production"
+API_BASE_URL = "https://api.parently.live"
+
+[env.staging.vars]
+HUGO_ENV = "staging"
+API_BASE_URL = "https://staging-api.parently.live" 
