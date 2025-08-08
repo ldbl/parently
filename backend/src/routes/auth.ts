@@ -19,9 +19,12 @@ export function createAuthRoutes(env: Env) {
    */
   router.post('/register', async (request: Request) => {
     try {
-      // Apply rate limiting
-      const mockRequest = { user: { id: 'anonymous' } } as any;
-      await rateLimitMiddleware.applyRateLimit(mockRequest, 'general');
+      // Apply rate limiting using IP address
+      const ip =
+        request.headers.get('cf-connecting-ip') ||
+        request.headers.get('x-forwarded-for')?.split(',')[0] ||
+        '';
+      await rateLimitMiddleware.applyRateLimit(request, 'general', ip);
 
       // Validate request body
       const body = await request.json();
@@ -96,9 +99,12 @@ export function createAuthRoutes(env: Env) {
    */
   router.post('/login', async (request: Request) => {
     try {
-      // Apply rate limiting
-      const mockRequest = { user: { id: 'anonymous' } } as any;
-      await rateLimitMiddleware.applyRateLimit(mockRequest, 'general');
+      // Apply rate limiting using IP address
+      const ip =
+        request.headers.get('cf-connecting-ip') ||
+        request.headers.get('x-forwarded-for')?.split(',')[0] ||
+        '';
+      await rateLimitMiddleware.applyRateLimit(request, 'general', ip);
 
       // Validate request body
       const body = await request.json();
@@ -150,9 +156,12 @@ export function createAuthRoutes(env: Env) {
    */
   router.post('/refresh', async (request: Request) => {
     try {
-      // Apply rate limiting
-      const mockRequest = { user: { id: 'anonymous' } } as any;
-      await rateLimitMiddleware.applyRateLimit(mockRequest, 'general');
+      // Apply rate limiting using IP address
+      const ip =
+        request.headers.get('cf-connecting-ip') ||
+        request.headers.get('x-forwarded-for')?.split(',')[0] ||
+        '';
+      await rateLimitMiddleware.applyRateLimit(request, 'general', ip);
 
       // Get refresh token from body
       const body = await request.json();
