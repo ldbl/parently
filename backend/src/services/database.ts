@@ -23,16 +23,27 @@ export class DatabaseService {
   /**
    * User operations
    */
-  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+  async createUser(
+    user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { passwordHash: string }
+  ): Promise<User> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO users (id, email, name, user_type, parent_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, email, name, password_hash, user_type, parent_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(id, user.email, user.name, user.userType, user.parentId || null, now, now).run();
+    await stmt.bind(
+      id,
+      user.email,
+      user.name,
+      user.passwordHash,
+      user.userType,
+      user.parentId || null,
+      now,
+      now
+    ).run();
 
     return {
       id,
@@ -51,10 +62,22 @@ export class DatabaseService {
     return result as User | null;
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
+  async getUserByEmail(
+    email: string
+  ): Promise<(User & { passwordHash: string }) | null> {
     const stmt = this.db.prepare('SELECT * FROM users WHERE email = ?');
-    const result = await stmt.bind(email).first();
-    return result as User | null;
+    const result: any = await stmt.bind(email).first();
+    if (!result) return null;
+    return {
+      id: result.id as string,
+      email: result.email as string,
+      name: result.name as string,
+      userType: result.user_type as 'parent' | 'child',
+      parentId: result.parent_id as string | undefined,
+      createdAt: result.created_at as string,
+      updatedAt: result.updated_at as string,
+      passwordHash: result.password_hash as string
+    };
   }
 
   async getChildrenByParentId(parentId: string): Promise<User[]> {

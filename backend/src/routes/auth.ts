@@ -6,6 +6,7 @@ import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit';
 import { CacheService } from '../utils/cache';
 import { Env } from '../types';
+import bcrypt from 'bcryptjs';
 
 export function createAuthRoutes(env: Env) {
   const router = Router();
@@ -56,12 +57,14 @@ export function createAuthRoutes(env: Env) {
         }
       }
 
-      // Create user
+      // Hash password and create user
+      const passwordHash = await bcrypt.hash(validatedData.password, 10);
       const user = await dbService.createUser({
         email: validatedData.email,
         name: validatedData.name,
         userType: validatedData.userType,
-        parentId: validatedData.parentId
+        parentId: validatedData.parentId,
+        passwordHash
       });
 
       // Generate tokens
@@ -116,6 +119,21 @@ export function createAuthRoutes(env: Env) {
         return new Response(JSON.stringify({
           success: false,
           error: 'Invalid email or user not found'
+        }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(
+        validatedData.password,
+        user.passwordHash
+      );
+      if (!isValidPassword) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Invalid password'
         }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' }
