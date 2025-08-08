@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'parent' | 'child';
+  userType: "parent" | "child";
   parentId?: string;
   createdAt: string;
   updatedAt: string;
@@ -11,7 +11,7 @@ export interface User {
 export interface ParentCheckin {
   id: string;
   userId: string;
-  checkinType: 'morning' | 'evening';
+  checkinType: "morning" | "evening";
   emotionalState: number; // 1-10
   financialStress: number; // 1-10
   notes?: string;
@@ -33,7 +33,7 @@ export interface ChatMessage {
   message: string;
   response: string;
   complexityScore?: number; // 1-5
-  aiModel: 'haiku' | 'sonnet';
+  aiModel: "haiku" | "sonnet";
   createdAt: string;
 }
 
@@ -42,7 +42,7 @@ export interface ChildTask {
   userId: string;
   title: string;
   description?: string;
-  taskType: 'homework' | 'social' | 'financial';
+  taskType: "homework" | "social" | "financial";
   points: number;
   completed: boolean;
   completedAt?: string;
@@ -64,7 +64,7 @@ export interface FinancialGoal {
   description?: string;
   targetAmount: number;
   currentAmount: number;
-  goalType: 'savings' | 'activity' | 'emergency';
+  goalType: "savings" | "activity" | "emergency";
   targetDate?: string;
   createdAt: string;
 }
@@ -81,7 +81,7 @@ export interface ChildInsight {
 
 // API Request/Response types
 export interface CheckinRequest {
-  checkinType: 'morning' | 'evening';
+  checkinType: "morning" | "evening";
   emotionalState: number;
   financialStress: number;
   notes?: string;
@@ -104,7 +104,7 @@ export interface FinancialGoalRequest {
   title: string;
   description?: string;
   targetAmount: number;
-  goalType: 'savings' | 'activity' | 'emergency';
+  goalType: "savings" | "activity" | "emergency";
   targetDate?: string;
 }
 
@@ -122,7 +122,7 @@ export interface AIDailyPlan {
 
 export interface AIChatResponse {
   response: string;
-  model: 'haiku' | 'sonnet';
+  model: "haiku" | "sonnet";
   complexityScore: number;
 }
 
@@ -138,7 +138,7 @@ export interface AIChildInsight {
 export interface JWTPayload {
   userId: string;
   email: string;
-  userType: 'parent' | 'child';
+  userType: "parent" | "child";
   parentId?: string;
   iat: number;
   exp: number;

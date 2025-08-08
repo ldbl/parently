@@ -1,15 +1,15 @@
-import { D1Database } from '@cloudflare/workers-types';
-import { 
-  User, 
-  ParentCheckin, 
-  DailyPlan, 
-  ChatMessage, 
-  ChildTask, 
-  ChildMessage, 
-  FinancialGoal, 
-  ChildInsight 
-} from '../types';
-import { EncryptionService } from '../utils/encryption';
+import { D1Database } from "@cloudflare/workers-types";
+import {
+  User,
+  ParentCheckin,
+  DailyPlan,
+  ChatMessage,
+  ChildTask,
+  ChildMessage,
+  FinancialGoal,
+  ChildInsight,
+} from "../types";
+import { EncryptionService } from "../utils/encryption";
 
 export class DatabaseService {
   private db: D1Database;
@@ -24,7 +24,7 @@ export class DatabaseService {
    * User operations
    */
   async createUser(
-    user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { passwordHash: string }
+    user: Omit<User, "id" | "createdAt" | "updatedAt"> & { passwordHash: string },
   ): Promise<User> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
@@ -34,16 +34,18 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id,
-      user.email,
-      user.name,
-      user.passwordHash,
-      user.userType,
-      user.parentId || null,
-      now,
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        user.email,
+        user.name,
+        user.passwordHash,
+        user.userType,
+        user.parentId || null,
+        now,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -52,44 +54,60 @@ export class DatabaseService {
       userType: user.userType,
       parentId: user.parentId,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
   }
 
   async getUserById(id: string): Promise<User | null> {
-    const stmt = this.db.prepare('SELECT * FROM users WHERE id = ?');
+    const stmt = this.db.prepare("SELECT * FROM users WHERE id = ?");
     const result = await stmt.bind(id).first();
-    return result as User | null;
+    if (!result) return null;
+    const row = result as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      email: row.email as string,
+      name: row.name as string,
+      userType: row.user_type as "parent" | "child",
+      parentId: (row.parent_id as string) || undefined,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    } satisfies User;
   }
 
-  async getUserByEmail(
-    email: string
-  ): Promise<(User & { passwordHash: string }) | null> {
-    const stmt = this.db.prepare('SELECT * FROM users WHERE email = ?');
+  async getUserByEmail(email: string): Promise<(User & { passwordHash: string }) | null> {
+    const stmt = this.db.prepare("SELECT * FROM users WHERE email = ?");
     const result: any = await stmt.bind(email).first();
     if (!result) return null;
     return {
       id: result.id as string,
       email: result.email as string,
       name: result.name as string,
-      userType: result.user_type as 'parent' | 'child',
+      userType: result.user_type as "parent" | "child",
       parentId: result.parent_id as string | undefined,
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string,
-      passwordHash: result.password_hash as string
+      passwordHash: result.password_hash as string,
     };
   }
 
   async getChildrenByParentId(parentId: string): Promise<User[]> {
     const stmt = this.db.prepare('SELECT * FROM users WHERE parent_id = ? AND user_type = "child"');
     const result = await stmt.bind(parentId).all();
-    return result.results as User[];
+    return (result.results as Record<string, unknown>[]).map((row) => ({
+      id: row.id as string,
+      email: row.email as string,
+      name: row.name as string,
+      userType: row.user_type as "parent" | "child",
+      parentId: (row.parent_id as string) || undefined,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    }));
   }
 
   /**
    * Check-in operations
    */
-  async createCheckin(checkin: Omit<ParentCheckin, 'id' | 'createdAt'>): Promise<ParentCheckin> {
+  async createCheckin(checkin: Omit<ParentCheckin, "id" | "createdAt">): Promise<ParentCheckin> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
     const notesEncrypted = checkin.notes ? this.encryption.encrypt(checkin.notes) : null;
@@ -99,16 +117,18 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id, 
-      checkin.userId, 
-      checkin.checkinType, 
-      checkin.emotionalState, 
-      checkin.financialStress, 
-      notesEncrypted, 
-      checkin.unexpectedExpenses, 
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        checkin.userId,
+        checkin.checkinType,
+        checkin.emotionalState,
+        checkin.financialStress,
+        notesEncrypted,
+        checkin.unexpectedExpenses,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -118,7 +138,7 @@ export class DatabaseService {
       financialStress: checkin.financialStress,
       notes: checkin.notes,
       unexpectedExpenses: checkin.unexpectedExpenses,
-      createdAt: now
+      createdAt: now,
     };
   }
 
@@ -132,23 +152,25 @@ export class DatabaseService {
     `);
 
     const result = await stmt.bind(userId, limit).all();
-    
-    return result.results.map(row => ({
+
+    return result.results.map((row) => ({
       id: row.id as string,
       userId: row.user_id as string,
-      checkinType: row.checkin_type as 'morning' | 'evening',
+      checkinType: row.checkin_type as "morning" | "evening",
       emotionalState: row.emotional_state as number,
       financialStress: row.financial_stress as number,
-      notes: row.notes_encrypted ? this.encryption.decrypt(row.notes_encrypted as string) : undefined,
+      notes: row.notes_encrypted
+        ? this.encryption.decrypt(row.notes_encrypted as string)
+        : undefined,
       unexpectedExpenses: row.unexpected_expenses as number,
-      createdAt: row.created_at as string
+      createdAt: row.created_at as string,
     }));
   }
 
   /**
    * Daily plan operations
    */
-  async createDailyPlan(plan: Omit<DailyPlan, 'id' | 'createdAt'>): Promise<DailyPlan> {
+  async createDailyPlan(plan: Omit<DailyPlan, "id" | "createdAt">): Promise<DailyPlan> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
 
@@ -164,20 +186,28 @@ export class DatabaseService {
       userId: plan.userId,
       planContent: plan.planContent,
       planDate: plan.planDate,
-      createdAt: now
+      createdAt: now,
     };
   }
 
   async getDailyPlan(userId: string, date: string): Promise<DailyPlan | null> {
-    const stmt = this.db.prepare('SELECT * FROM daily_plans WHERE user_id = ? AND plan_date = ?');
+    const stmt = this.db.prepare("SELECT * FROM daily_plans WHERE user_id = ? AND plan_date = ?");
     const result = await stmt.bind(userId, date).first();
-    return result as DailyPlan | null;
+    if (!result) return null;
+    const row = result as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      userId: row.user_id as string,
+      planContent: row.plan_content as string,
+      planDate: row.plan_date as string,
+      createdAt: row.created_at as string,
+    } satisfies DailyPlan;
   }
 
   /**
    * Chat operations
    */
-  async createChatMessage(message: Omit<ChatMessage, 'id' | 'createdAt'>): Promise<ChatMessage> {
+  async createChatMessage(message: Omit<ChatMessage, "id" | "createdAt">): Promise<ChatMessage> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
     const messageEncrypted = this.encryption.encrypt(message.message);
@@ -188,15 +218,17 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id, 
-      message.userId, 
-      messageEncrypted, 
-      responseEncrypted, 
-      message.complexityScore || null, 
-      message.aiModel, 
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        message.userId,
+        messageEncrypted,
+        responseEncrypted,
+        message.complexityScore || null,
+        message.aiModel,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -205,7 +237,7 @@ export class DatabaseService {
       response: message.response,
       complexityScore: message.complexityScore,
       aiModel: message.aiModel,
-      createdAt: now
+      createdAt: now,
     };
   }
 
@@ -219,22 +251,22 @@ export class DatabaseService {
     `);
 
     const result = await stmt.bind(userId, limit).all();
-    
-    return result.results.map(row => ({
+
+    return (result.results as Record<string, unknown>[]).map((row) => ({
       id: row.id as string,
       userId: row.user_id as string,
       message: this.encryption.decrypt(row.message_encrypted as string),
       response: this.encryption.decrypt(row.response_encrypted as string),
       complexityScore: row.complexity_score as number | undefined,
-      aiModel: row.ai_model as 'haiku' | 'sonnet',
-      createdAt: row.created_at as string
+      aiModel: row.ai_model as "haiku" | "sonnet",
+      createdAt: row.created_at as string,
     }));
   }
 
   /**
    * Child task operations
    */
-  async createChildTask(task: Omit<ChildTask, 'id' | 'createdAt'>): Promise<ChildTask> {
+  async createChildTask(task: Omit<ChildTask, "id" | "createdAt">): Promise<ChildTask> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
 
@@ -243,16 +275,18 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id, 
-      task.userId, 
-      task.title, 
-      task.description || null, 
-      task.taskType, 
-      task.points, 
-      task.completed, 
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        task.userId,
+        task.title,
+        task.description || null,
+        task.taskType,
+        task.points,
+        task.completed,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -262,33 +296,57 @@ export class DatabaseService {
       taskType: task.taskType,
       points: task.points,
       completed: task.completed,
-      createdAt: now
+      createdAt: now,
     };
   }
 
   async getChildTasks(userId: string, completed?: boolean): Promise<ChildTask[]> {
     let stmt;
     if (completed !== undefined) {
-      stmt = this.db.prepare('SELECT * FROM child_tasks WHERE user_id = ? AND completed = ? ORDER BY created_at DESC');
+      stmt = this.db.prepare(
+        "SELECT * FROM child_tasks WHERE user_id = ? AND completed = ? ORDER BY created_at DESC",
+      );
       const result = await stmt.bind(userId, completed).all();
-      return result.results as ChildTask[];
+      return (result.results as Record<string, unknown>[]).map((row) => ({
+        id: row.id as string,
+        userId: row.user_id as string,
+        title: row.title as string,
+        description: (row.description as string) || undefined,
+        taskType: row.task_type as "homework" | "social" | "financial",
+        points: row.points as number,
+        completed: Boolean(row.completed),
+        createdAt: row.created_at as string,
+      }));
     } else {
-      stmt = this.db.prepare('SELECT * FROM child_tasks WHERE user_id = ? ORDER BY created_at DESC');
+      stmt = this.db.prepare(
+        "SELECT * FROM child_tasks WHERE user_id = ? ORDER BY created_at DESC",
+      );
       const result = await stmt.bind(userId).all();
-      return result.results as ChildTask[];
+      return (result.results as Record<string, unknown>[]).map((row) => ({
+        id: row.id as string,
+        userId: row.user_id as string,
+        title: row.title as string,
+        description: (row.description as string) || undefined,
+        taskType: row.task_type as "homework" | "social" | "financial",
+        points: row.points as number,
+        completed: Boolean(row.completed),
+        createdAt: row.created_at as string,
+      }));
     }
   }
 
   async completeTask(taskId: string): Promise<void> {
     const now = new Date().toISOString();
-    const stmt = this.db.prepare('UPDATE child_tasks SET completed = TRUE, completed_at = ? WHERE id = ?');
+    const stmt = this.db.prepare(
+      "UPDATE child_tasks SET completed = TRUE, completed_at = ? WHERE id = ?",
+    );
     await stmt.bind(now, taskId).run();
   }
 
   /**
    * Child message operations
    */
-  async createChildMessage(message: Omit<ChildMessage, 'id' | 'createdAt'>): Promise<ChildMessage> {
+  async createChildMessage(message: Omit<ChildMessage, "id" | "createdAt">): Promise<ChildMessage> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
     const messageEncrypted = this.encryption.encrypt(message.message);
@@ -306,7 +364,7 @@ export class DatabaseService {
       userId: message.userId,
       message: message.message,
       aiResponse: message.aiResponse,
-      createdAt: now
+      createdAt: now,
     };
   }
 
@@ -320,20 +378,20 @@ export class DatabaseService {
     `);
 
     const result = await stmt.bind(userId, limit).all();
-    
-    return result.results.map(row => ({
+
+    return (result.results as Record<string, unknown>[]).map((row) => ({
       id: row.id as string,
       userId: row.user_id as string,
       message: this.encryption.decrypt(row.message_encrypted as string),
       aiResponse: this.encryption.decrypt(row.ai_response_encrypted as string),
-      createdAt: row.created_at as string
+      createdAt: row.created_at as string,
     }));
   }
 
   /**
    * Financial goal operations
    */
-  async createFinancialGoal(goal: Omit<FinancialGoal, 'id' | 'createdAt'>): Promise<FinancialGoal> {
+  async createFinancialGoal(goal: Omit<FinancialGoal, "id" | "createdAt">): Promise<FinancialGoal> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
 
@@ -342,17 +400,19 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id, 
-      goal.userId, 
-      goal.title, 
-      goal.description || null, 
-      goal.targetAmount, 
-      goal.currentAmount, 
-      goal.goalType, 
-      goal.targetDate || null, 
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        goal.userId,
+        goal.title,
+        goal.description || null,
+        goal.targetAmount,
+        goal.currentAmount,
+        goal.goalType,
+        goal.targetDate || null,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -363,25 +423,37 @@ export class DatabaseService {
       currentAmount: goal.currentAmount,
       goalType: goal.goalType,
       targetDate: goal.targetDate,
-      createdAt: now
+      createdAt: now,
     };
   }
 
   async getFinancialGoals(userId: string): Promise<FinancialGoal[]> {
-    const stmt = this.db.prepare('SELECT * FROM financial_goals WHERE user_id = ? ORDER BY created_at DESC');
+    const stmt = this.db.prepare(
+      "SELECT * FROM financial_goals WHERE user_id = ? ORDER BY created_at DESC",
+    );
     const result = await stmt.bind(userId).all();
-    return result.results as FinancialGoal[];
+    return (result.results as Record<string, unknown>[]).map((row) => ({
+      id: row.id as string,
+      userId: row.user_id as string,
+      title: row.title as string,
+      description: (row.description as string) || undefined,
+      targetAmount: row.target_amount as number,
+      currentAmount: row.current_amount as number,
+      goalType: row.goal_type as "savings" | "activity" | "emergency",
+      targetDate: (row.target_date as string) || undefined,
+      createdAt: row.created_at as string,
+    }));
   }
 
   async updateFinancialGoalProgress(goalId: string, currentAmount: number): Promise<void> {
-    const stmt = this.db.prepare('UPDATE financial_goals SET current_amount = ? WHERE id = ?');
+    const stmt = this.db.prepare("UPDATE financial_goals SET current_amount = ? WHERE id = ?");
     await stmt.bind(currentAmount, goalId).run();
   }
 
   /**
    * Child insights operations
    */
-  async createChildInsight(insight: Omit<ChildInsight, 'id' | 'createdAt'>): Promise<ChildInsight> {
+  async createChildInsight(insight: Omit<ChildInsight, "id" | "createdAt">): Promise<ChildInsight> {
     const id = this.encryption.generateSecureId();
     const now = new Date().toISOString();
 
@@ -390,15 +462,17 @@ export class DatabaseService {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    await stmt.bind(
-      id, 
-      insight.parentId, 
-      insight.childId, 
-      insight.insightContent, 
-      insight.recommendations || null, 
-      insight.insightDate, 
-      now
-    ).run();
+    await stmt
+      .bind(
+        id,
+        insight.parentId,
+        insight.childId,
+        insight.insightContent,
+        insight.recommendations || null,
+        insight.insightDate,
+        now,
+      )
+      .run();
 
     return {
       id,
@@ -407,19 +481,31 @@ export class DatabaseService {
       insightContent: insight.insightContent,
       recommendations: insight.recommendations,
       insightDate: insight.insightDate,
-      createdAt: now
+      createdAt: now,
     };
   }
 
-  async getChildInsights(parentId: string, childId: string, limit: number = 10): Promise<ChildInsight[]> {
+  async getChildInsights(
+    parentId: string,
+    childId: string,
+    limit: number = 10,
+  ): Promise<ChildInsight[]> {
     const stmt = this.db.prepare(`
       SELECT * FROM child_insights 
       WHERE parent_id = ? AND child_id = ? 
       ORDER BY created_at DESC 
       LIMIT ?
     `);
-    
+
     const result = await stmt.bind(parentId, childId, limit).all();
-    return result.results as ChildInsight[];
+    return (result.results as Record<string, unknown>[]).map((row) => ({
+      id: row.id as string,
+      parentId: row.parent_id as string,
+      childId: row.child_id as string,
+      insightContent: row.insight_content as string,
+      recommendations: (row.recommendations as string) || undefined,
+      insightDate: row.insight_date as string,
+      createdAt: row.created_at as string,
+    }));
   }
-} 
+}

@@ -5,6 +5,7 @@ Parently is an AI-powered assistant that helps parents and children better under
 ## 🚀 Features
 
 ### For Parents
+
 - **Daily Check-ins**: Morning and evening emotional + financial stress tracking
 - **AI Daily Plans**: Personalized parenting and finance advice
 - **Free Chat**: Conversational AI support (Haiku/Sonnet based on complexity)
@@ -13,6 +14,7 @@ Parently is an AI-powered assistant that helps parents and children better under
 - **Family Goals**: Savings, activity budgets, and financial planning
 
 ### For Children
+
 - **Simplified Chat**: Child-friendly AI conversations with emojis
 - **Gamification**: Tasks (homework, social, financial) with reward points
 - **Financial Education**: Mini-tasks related to pocket money and savings
@@ -133,6 +135,7 @@ wrangler d1 migrations apply parently-db
 All endpoints except `/health`, `/api/v1`, and `/api/v1/auth/*` require authentication via Bearer token.
 
 #### Register User
+
 ```http
 POST /api/v1/auth/register
 Content-Type: application/json
@@ -146,6 +149,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /api/v1/auth/login
 Content-Type: application/json
@@ -157,6 +161,7 @@ Content-Type: application/json
 ```
 
 #### Refresh Token
+
 ```http
 POST /api/v1/auth/refresh
 Content-Type: application/json
@@ -169,6 +174,7 @@ Content-Type: application/json
 ### Parent Endpoints
 
 #### Create Check-in
+
 ```http
 POST /api/v1/parent/checkin
 Authorization: Bearer <token>
@@ -184,12 +190,14 @@ Content-Type: application/json
 ```
 
 #### Get Daily Plan
+
 ```http
 GET /api/v1/parent/plan?date=2024-01-15
 Authorization: Bearer <token>
 ```
 
 #### Chat with AI
+
 ```http
 POST /api/v1/parent/chat
 Authorization: Bearer <token>
@@ -201,18 +209,21 @@ Content-Type: application/json
 ```
 
 #### Get Progress
+
 ```http
 GET /api/v1/parent/progress?limit=10
 Authorization: Bearer <token>
 ```
 
 #### Get Child Insights
+
 ```http
 GET /api/v1/parent/insights
 Authorization: Bearer <token>
 ```
 
 #### Create Financial Goal
+
 ```http
 POST /api/v1/parent/goals
 Authorization: Bearer <token>
@@ -230,6 +241,7 @@ Content-Type: application/json
 ### Children Endpoints
 
 #### Send Message
+
 ```http
 POST /api/v1/kids/message
 Authorization: Bearer <token>
@@ -241,12 +253,14 @@ Content-Type: application/json
 ```
 
 #### Get Tasks
+
 ```http
 GET /api/v1/kids/tasks?completed=false
 Authorization: Bearer <token>
 ```
 
 #### Complete Task
+
 ```http
 POST /api/v1/kids/tasks/complete
 Authorization: Bearer <token>
@@ -258,6 +272,7 @@ Content-Type: application/json
 ```
 
 #### Create Task (Parent)
+
 ```http
 POST /api/v1/kids/tasks?childId=child-uuid
 Authorization: Bearer <token>
@@ -291,6 +306,7 @@ Content-Type: application/json
 ## 💰 Monetization Strategy
 
 ### Freemium Model
+
 - **Free Tier**: Basic plans and chat functionality
 - **Premium Tier** (~10-15€/month): Financial module, family goals, child accounts
 
@@ -353,10 +369,11 @@ This project is proprietary software. All rights reserved.
 ## 🆘 Support
 
 For support and questions:
+
 - Create an issue in the repository
 - Contact the development team
 - Check the API documentation
 
 ---
 
-**Parently** - Making family life easier with AI 🤖👨‍👩‍👧‍👦 
+**Parently** - Making family life easier with AI 🤖👨‍👩‍👧‍👦

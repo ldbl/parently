@@ -1,12 +1,12 @@
-import { JWTService } from '../utils/jwt';
-import { DatabaseService } from '../services/database';
-import { Env } from '../types';
+import { JWTService } from "../utils/jwt";
+import { DatabaseService } from "../services/database";
+import { Env } from "../types";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    userType: 'parent' | 'child';
+    userType: "parent" | "child";
     parentId?: string;
   };
 }
@@ -24,20 +24,20 @@ export class AuthMiddleware {
    * Authenticate user with JWT token
    */
   async authenticate(request: Request): Promise<AuthenticatedRequest> {
-    const authHeader = request.headers.get('Authorization');
-    
+    const authHeader = request.headers.get("Authorization");
+
     if (!authHeader) {
-      throw new Error('Authorization header required');
+      throw new Error("Authorization header required");
     }
 
     try {
       const token = this.jwtService.extractTokenFromHeader(authHeader);
       const payload = this.jwtService.verifyAccessToken(token);
-      
+
       // Verify user still exists in database
       const user = await this.dbService.getUserById(payload.userId);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       const authenticatedRequest = request as AuthenticatedRequest;
@@ -45,12 +45,14 @@ export class AuthMiddleware {
         id: payload.userId,
         email: payload.email,
         userType: payload.userType,
-        parentId: payload.parentId
+        parentId: payload.parentId,
       };
 
       return authenticatedRequest;
     } catch (error) {
-      throw new Error(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Authentication failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
 
@@ -59,11 +61,11 @@ export class AuthMiddleware {
    */
   async requireParent(request: AuthenticatedRequest): Promise<void> {
     if (!request.user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
-    if (request.user.userType !== 'parent') {
-      throw new Error('Parent access required');
+    if (request.user.userType !== "parent") {
+      throw new Error("Parent access required");
     }
   }
 
@@ -72,11 +74,11 @@ export class AuthMiddleware {
    */
   async requireChild(request: AuthenticatedRequest): Promise<void> {
     if (!request.user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
-    if (request.user.userType !== 'child') {
-      throw new Error('Child access required');
+    if (request.user.userType !== "child") {
+      throw new Error("Child access required");
     }
   }
 
@@ -85,7 +87,7 @@ export class AuthMiddleware {
    */
   async requireUserOrParent(request: AuthenticatedRequest, userId: string): Promise<void> {
     if (!request.user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // User can access their own data
@@ -94,30 +96,40 @@ export class AuthMiddleware {
     }
 
     // Parent can access their children's data
-    if (request.user.userType === 'parent') {
+    if (request.user.userType === "parent") {
       const children = await this.dbService.getChildrenByParentId(request.user.id);
-      const childIds = children.map(child => child.id);
-      
+      const childIds = children.map((child) => child.id);
+
       if (childIds.includes(userId)) {
         return;
       }
     }
 
-    throw new Error('Access denied');
+    throw new Error("Access denied");
   }
 
   /**
    * Generate tokens for user
    */
-  generateTokens(user: { id: string; email: string; userType: 'parent' | 'child'; parentId?: string }) {
-    const accessToken = this.jwtService.generateAccessToken(user);
+  generateTokens(user: {
+    id: string;
+    email: string;
+    userType: "parent" | "child";
+    parentId?: string;
+  }) {
+    const accessToken = this.jwtService.generateAccessToken({
+      userId: user.id,
+      email: user.email,
+      userType: user.userType,
+      parentId: user.parentId,
+    });
     const refreshToken = this.jwtService.generateRefreshToken(user.id);
 
     return {
       accessToken,
       refreshToken,
       expiresIn: 15 * 60, // 15 minutes
-      refreshExpiresIn: 7 * 24 * 60 * 60 // 7 days
+      refreshExpiresIn: 7 * 24 * 60 * 60, // 7 days
     };
   }
 
@@ -128,24 +140,26 @@ export class AuthMiddleware {
     try {
       const { userId } = this.jwtService.verifyRefreshToken(refreshToken);
       const user = await this.dbService.getUserById(userId);
-      
+
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       const accessToken = this.jwtService.generateAccessToken({
-        id: user.id,
+        userId: user.id,
         email: user.email,
         userType: user.userType,
-        parentId: user.parentId
+        parentId: user.parentId,
       });
 
       return {
         accessToken,
-        expiresIn: 15 * 60 // 15 minutes
+        expiresIn: 15 * 60, // 15 minutes
       };
     } catch (error) {
-      throw new Error(`Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Token refresh failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
-} 
+}

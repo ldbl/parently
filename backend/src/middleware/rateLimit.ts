@@ -1,5 +1,5 @@
-import { CacheService } from '../utils/cache';
-import { AuthenticatedRequest } from './auth';
+import { CacheService } from "../utils/cache";
+import { AuthenticatedRequest } from "./auth";
 
 export interface RateLimitConfig {
   windowMs: number; // Time window in milliseconds
@@ -20,18 +20,22 @@ export class RateLimitMiddleware {
     }
     if (identifier) return identifier;
     const headerIp =
-      request.headers.get('cf-connecting-ip') ||
-      request.headers.get('x-forwarded-for')?.split(',')[0];
+      request.headers.get("cf-connecting-ip") ||
+      request.headers.get("x-forwarded-for")?.split(",")[0];
     return headerIp?.trim() || null;
   }
 
   /**
    * Check rate limit for user or identifier
    */
-  async checkRateLimit(request: Request, config: RateLimitConfig, identifier?: string): Promise<boolean> {
+  async checkRateLimit(
+    request: Request,
+    config: RateLimitConfig,
+    identifier?: string,
+  ): Promise<boolean> {
     const id = this.getIdentifier(request, identifier);
     if (!id) {
-      throw new Error('Authentication required for rate limiting');
+      throw new Error("Authentication required for rate limiting");
     }
 
     const now = Date.now();
@@ -66,14 +70,18 @@ export class RateLimitMiddleware {
   /**
    * Get rate limit info for user or identifier
    */
-  async getRateLimitInfo(request: Request, config: RateLimitConfig, identifier?: string): Promise<{
+  async getRateLimitInfo(
+    request: Request,
+    config: RateLimitConfig,
+    identifier?: string,
+  ): Promise<{
     remaining: number;
     reset: number;
     limit: number;
   }> {
     const id = this.getIdentifier(request, identifier);
     if (!id) {
-      throw new Error('Authentication required for rate limiting');
+      throw new Error("Authentication required for rate limiting");
     }
 
     const rateLimitData = await this.cache.getRateLimit(id, config.endpoint);
@@ -84,14 +92,14 @@ export class RateLimitMiddleware {
       return {
         remaining: config.maxRequests,
         reset: now + config.windowMs,
-        limit: config.maxRequests
+        limit: config.maxRequests,
       };
     }
 
     return {
       remaining: Math.max(0, config.maxRequests - rateLimitData.count),
       reset: rateLimitData.timestamp + config.windowMs,
-      limit: config.maxRequests
+      limit: config.maxRequests,
     };
   }
 
@@ -104,36 +112,36 @@ export class RateLimitMiddleware {
       chat: {
         windowMs: 60 * 1000, // 1 minute
         maxRequests: 10,
-        endpoint: 'chat'
+        endpoint: "chat",
       },
-      
+
       // Check-in endpoints - moderate
       checkin: {
         windowMs: 60 * 1000, // 1 minute
         maxRequests: 5,
-        endpoint: 'checkin'
+        endpoint: "checkin",
       },
-      
+
       // Plan generation - moderate
       plan: {
         windowMs: 5 * 60 * 1000, // 5 minutes
         maxRequests: 3,
-        endpoint: 'plan'
+        endpoint: "plan",
       },
-      
+
       // Insights generation - more restrictive
       insights: {
         windowMs: 10 * 60 * 1000, // 10 minutes
         maxRequests: 2,
-        endpoint: 'insights'
+        endpoint: "insights",
       },
-      
+
       // General API - permissive
       general: {
         windowMs: 60 * 1000, // 1 minute
         maxRequests: 30,
-        endpoint: 'general'
-      }
+        endpoint: "general",
+      },
     };
   }
 
@@ -143,7 +151,7 @@ export class RateLimitMiddleware {
   async applyRateLimit(
     request: Request,
     configType: keyof ReturnType<typeof RateLimitMiddleware.getConfigs>,
-    identifier?: string
+    identifier?: string,
   ): Promise<void> {
     const configs = RateLimitMiddleware.getConfigs();
     const config = configs[configType];
@@ -156,7 +164,9 @@ export class RateLimitMiddleware {
 
     if (!allowed) {
       const info = await this.getRateLimitInfo(request, config, identifier);
-      throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((info.reset - Date.now()) / 1000)} seconds`);
+      throw new Error(
+        `Rate limit exceeded. Try again in ${Math.ceil((info.reset - Date.now()) / 1000)} seconds`,
+      );
     }
   }
-} 
+}

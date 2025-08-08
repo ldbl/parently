@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import CryptoJS from "crypto-js";
 
 export class EncryptionService {
   private key: string;
@@ -11,14 +11,14 @@ export class EncryptionService {
    * Encrypt sensitive data
    */
   encrypt(text: string): string {
-    if (!text) return '';
-    
+    if (!text) return "";
+
     try {
       const encrypted = CryptoJS.AES.encrypt(text, this.key).toString();
       return encrypted;
     } catch (error) {
-      console.error('Encryption error:', error);
-      throw new Error('Failed to encrypt data');
+      console.error("Encryption error:", error);
+      throw new Error("Failed to encrypt data");
     }
   }
 
@@ -26,15 +26,15 @@ export class EncryptionService {
    * Decrypt sensitive data
    */
   decrypt(encryptedText: string): string {
-    if (!encryptedText) return '';
-    
+    if (!encryptedText) return "";
+
     try {
       const decrypted = CryptoJS.AES.decrypt(encryptedText, this.key);
       const originalText = decrypted.toString(CryptoJS.enc.Utf8);
       return originalText;
     } catch (error) {
-      console.error('Decryption error:', error);
-      throw new Error('Failed to decrypt data');
+      console.error("Decryption error:", error);
+      throw new Error("Failed to decrypt data");
     }
   }
 
@@ -67,4 +67,4 @@ export class EncryptionService {
   generateSecureId(): string {
     return CryptoJS.lib.WordArray.random(16).toString();
   }
-} 
+}

@@ -1,16 +1,12 @@
-import { Router } from 'itty-router';
-import { z } from 'zod';
-import { 
-  childMessageSchema, 
-  taskCompleteSchema, 
-  createTaskSchema 
-} from '../validation/schemas';
-import { DatabaseService } from '../services/database';
-import { AIService } from '../services/ai';
-import { CacheService } from '../utils/cache';
-import { AuthMiddleware, AuthenticatedRequest } from '../middleware/auth';
-import { RateLimitMiddleware } from '../middleware/rateLimit';
-import { Env } from '../types';
+import { Router } from "itty-router";
+import { z } from "zod";
+import { childMessageSchema, taskCompleteSchema, createTaskSchema } from "../validation/schemas";
+import { DatabaseService } from "../services/database";
+import { AIService } from "../services/ai";
+import { CacheService } from "../utils/cache";
+import { AuthMiddleware, AuthenticatedRequest } from "../middleware/auth";
+import { RateLimitMiddleware } from "../middleware/rateLimit";
+import { Env } from "../types";
 
 export function createChildrenRoutes(env: Env) {
   const router = Router();
@@ -23,14 +19,14 @@ export function createChildrenRoutes(env: Env) {
   /**
    * POST /kids/message - Send message to AI (simplified chat)
    */
-  router.post('/kids/message', async (request: Request) => {
+  router.post("/kids/message", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireChild(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'chat');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "chat");
 
       // Validate request body
       const body = await request.json();
@@ -38,16 +34,22 @@ export function createChildrenRoutes(env: Env) {
 
       // Check cache for similar messages
       const messageHash = cacheService.generateMessageHash(validatedData.message);
-      const cachedResponse = await cacheService.getCachedAIResponse(authRequest.user!.id, messageHash);
-      
+      const cachedResponse = await cacheService.getCachedAIResponse(
+        authRequest.user!.id,
+        messageHash,
+      );
+
       if (cachedResponse) {
-        return new Response(JSON.stringify({
-          success: true,
-          data: cachedResponse,
-          cached: true
-        }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: cachedResponse,
+            cached: true,
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       }
 
       // Create child-friendly prompt
@@ -68,19 +70,21 @@ Use emojis occasionally to make it friendly.`;
       await dbService.createChildMessage({
         userId: authRequest.user!.id,
         message: validatedData.message,
-        aiResponse: aiResponse.response
+        aiResponse: aiResponse.response,
       });
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          response: aiResponse.response,
-          model: aiResponse.model
-        }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            response: aiResponse.response,
+            model: aiResponse.model,
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -89,43 +93,48 @@ Use emojis occasionally to make it friendly.`;
   /**
    * GET /kids/tasks - Get child's tasks and points
    */
-  router.get('/kids/tasks', async (request: Request) => {
+  router.get("/kids/tasks", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireChild(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'general');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "general");
 
       // Get query parameters
       const url = new URL(request.url);
-      const completed = url.searchParams.get('completed');
-      
+      const completed = url.searchParams.get("completed");
+
       let tasks;
       if (completed !== null) {
-        tasks = await dbService.getChildTasks(authRequest.user!.id, completed === 'true');
+        tasks = await dbService.getChildTasks(authRequest.user!.id, completed === "true");
       } else {
         tasks = await dbService.getChildTasks(authRequest.user!.id);
       }
 
       // Calculate total points
       const totalPoints = tasks.reduce((sum, task) => sum + (task.completed ? task.points : 0), 0);
-      const availablePoints = tasks.reduce((sum, task) => sum + (task.completed ? 0 : task.points), 0);
+      const availablePoints = tasks.reduce(
+        (sum, task) => sum + (task.completed ? 0 : task.points),
+        0,
+      );
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          tasks,
-          points: {
-            total: totalPoints,
-            available: availablePoints
-          }
-        }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            tasks,
+            points: {
+              total: totalPoints,
+              available: availablePoints,
+            },
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -134,14 +143,14 @@ Use emojis occasionally to make it friendly.`;
   /**
    * POST /kids/tasks/complete - Mark task as completed
    */
-  router.post('/kids/tasks/complete', async (request: Request) => {
+  router.post("/kids/tasks/complete", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireChild(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'general');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "general");
 
       // Validate request body
       const body = await request.json();
@@ -152,19 +161,21 @@ Use emojis occasionally to make it friendly.`;
 
       // Get the task to return points earned
       const tasks = await dbService.getChildTasks(authRequest.user!.id);
-      const completedTask = tasks.find(task => task.id === validatedData.taskId);
+      const completedTask = tasks.find((task) => task.id === validatedData.taskId);
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          message: 'Task completed successfully!',
-          pointsEarned: completedTask?.points || 0,
-          taskId: validatedData.taskId
-        }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            message: "Task completed successfully!",
+            pointsEarned: completedTask?.points || 0,
+            taskId: validatedData.taskId,
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -173,14 +184,14 @@ Use emojis occasionally to make it friendly.`;
   /**
    * POST /kids/tasks - Create new task (for parents)
    */
-  router.post('/kids/tasks', async (request: Request) => {
+  router.post("/kids/tasks", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireParent(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'general');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "general");
 
       // Validate request body
       const body = await request.json();
@@ -188,10 +199,10 @@ Use emojis occasionally to make it friendly.`;
 
       // Get child ID from query params
       const url = new URL(request.url);
-      const childId = url.searchParams.get('childId');
-      
+      const childId = url.searchParams.get("childId");
+
       if (!childId) {
-        throw new Error('Child ID is required');
+        throw new Error("Child ID is required");
       }
 
       // Verify parent has access to this child
@@ -204,17 +215,19 @@ Use emojis occasionally to make it friendly.`;
         description: validatedData.description,
         taskType: validatedData.taskType,
         points: validatedData.points || 10,
-        completed: false
+        completed: false,
       });
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: task
-      }), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: task,
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -223,22 +236,22 @@ Use emojis occasionally to make it friendly.`;
   /**
    * GET /kids/messages - Get child's message history (for parents)
    */
-  router.get('/kids/messages', async (request: Request) => {
+  router.get("/kids/messages", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireParent(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'general');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "general");
 
       // Get child ID from query params
       const url = new URL(request.url);
-      const childId = url.searchParams.get('childId');
-      const limit = parseInt(url.searchParams.get('limit') || '20');
-      
+      const childId = url.searchParams.get("childId");
+      const limit = parseInt(url.searchParams.get("limit") || "20");
+
       if (!childId) {
-        throw new Error('Child ID is required');
+        throw new Error("Child ID is required");
       }
 
       // Verify parent has access to this child
@@ -247,13 +260,15 @@ Use emojis occasionally to make it friendly.`;
       // Get child messages
       const messages = await dbService.getChildMessages(childId, limit);
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: messages
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: messages,
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -262,21 +277,21 @@ Use emojis occasionally to make it friendly.`;
   /**
    * GET /kids/summary - Get child's activity summary (for parents)
    */
-  router.get('/kids/summary', async (request: Request) => {
+  router.get("/kids/summary", async (request: Request) => {
     try {
       // Authenticate user
       const authRequest = await authMiddleware.authenticate(request);
       await authMiddleware.requireParent(authRequest);
-      
+
       // Apply rate limiting
-      await rateLimitMiddleware.applyRateLimit(authRequest, 'general');
+      await rateLimitMiddleware.applyRateLimit(authRequest, "general");
 
       // Get child ID from query params
       const url = new URL(request.url);
-      const childId = url.searchParams.get('childId');
-      
+      const childId = url.searchParams.get("childId");
+
       if (!childId) {
-        throw new Error('Child ID is required');
+        throw new Error("Child ID is required");
       }
 
       // Verify parent has access to this child
@@ -285,11 +300,11 @@ Use emojis occasionally to make it friendly.`;
       // Get child data
       const [tasks, messages] = await Promise.all([
         dbService.getChildTasks(childId),
-        dbService.getChildMessages(childId, 10)
+        dbService.getChildMessages(childId, 10),
       ]);
 
       // Calculate summary
-      const completedTasks = tasks.filter(task => task.completed);
+      const completedTasks = tasks.filter((task) => task.completed);
       const totalPoints = completedTasks.reduce((sum, task) => sum + task.points, 0);
       const recentMessages = messages.slice(0, 5);
 
@@ -298,29 +313,31 @@ Use emojis occasionally to make it friendly.`;
         tasks: {
           total: tasks.length,
           completed: completedTasks.length,
-          pending: tasks.length - completedTasks.length
+          pending: tasks.length - completedTasks.length,
         },
         points: {
           total: totalPoints,
-          available: tasks.reduce((sum, task) => sum + (task.completed ? 0 : task.points), 0)
+          available: tasks.reduce((sum, task) => sum + (task.completed ? 0 : task.points), 0),
         },
         recentActivity: {
           lastMessage: messages[0]?.createdAt || null,
           messageCount: messages.length,
-          recentMessages: recentMessages.map(m => ({
-            message: m.message.substring(0, 50) + (m.message.length > 50 ? '...' : ''),
-            timestamp: m.createdAt
-          }))
-        }
+          recentMessages: recentMessages.map((m) => ({
+            message: m.message.substring(0, 50) + (m.message.length > 50 ? "..." : ""),
+            timestamp: m.createdAt,
+          })),
+        },
       };
 
-      return new Response(JSON.stringify({
-        success: true,
-        data: summary
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: summary,
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error) {
       return handleError(error);
     }
@@ -330,27 +347,30 @@ Use emojis occasionally to make it friendly.`;
 }
 
 function handleError(error: unknown): Response {
-  console.error('Children API Error:', error);
-  
-  let message = 'Internal server error';
+  console.error("Children API Error:", error);
+
+  let message = "Internal server error";
   let status = 500;
 
   if (error instanceof z.ZodError) {
-    message = 'Validation error: ' + error.errors.map(e => e.message).join(', ');
+    message = "Validation error: " + error.errors.map((e) => e.message).join(", ");
     status = 400;
   } else if (error instanceof Error) {
     message = error.message;
-    if (message.includes('Authentication')) status = 401;
-    else if (message.includes('Access denied')) status = 403;
-    else if (message.includes('Rate limit')) status = 429;
-    else if (message.includes('not found')) status = 404;
+    if (message.includes("Authentication")) status = 401;
+    else if (message.includes("Access denied")) status = 403;
+    else if (message.includes("Rate limit")) status = 429;
+    else if (message.includes("not found")) status = 404;
   }
 
-  return new Response(JSON.stringify({
-    success: false,
-    error: message
-  }), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
-  });
-} 
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: message,
+    }),
+    {
+      status,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}

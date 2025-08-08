@@ -1,8 +1,8 @@
-import { AIComplexityEvaluation, AIDailyPlan, AIChatResponse, AIChildInsight } from '../types';
+import { AIComplexityEvaluation, AIDailyPlan, AIChatResponse, AIChildInsight } from "../types";
 
 export class AIService {
   private apiKey: string;
-  private baseUrl = 'https://api.anthropic.com/v1/messages';
+  private baseUrl = "https://api.anthropic.com/v1/messages";
   private maxRetries = 3;
   private timeout = 10000; // 10 seconds
 
@@ -30,18 +30,18 @@ Respond with JSON format:
 }`;
 
     try {
-      const response = await this.callClaude(prompt, 'haiku');
+      const response = await this.callClaude(prompt, "haiku");
       const result = JSON.parse(response);
-      
+
       return {
         complexityScore: Math.min(Math.max(result.complexityScore, 1), 5),
-        reasoning: result.reasoning || 'Complexity evaluated'
+        reasoning: result.reasoning || "Complexity evaluated",
       };
     } catch (error) {
-      console.error('Complexity evaluation error:', error);
+      console.error("Complexity evaluation error:", error);
       return {
         complexityScore: 3, // Default to moderate complexity
-        reasoning: 'Default complexity score due to evaluation error'
+        reasoning: "Default complexity score due to evaluation error",
       };
     }
   }
@@ -56,10 +56,10 @@ Respond with JSON format:
   }): Promise<AIDailyPlan> {
     const prompt = `As a parenting and family finance AI assistant, create a concise daily plan based on this context:
 
-Recent emotional states: ${userContext.recentCheckins.map(c => `${c.emotionalState}/10`).join(', ')}
-Recent financial stress: ${userContext.recentCheckins.map(c => `${c.financialStress}/10`).join(', ')}
-Current goals: ${userContext.currentGoals?.join(', ') || 'None specified'}
-Family situation: ${userContext.familySituation || 'Not specified'}
+Recent emotional states: ${userContext.recentCheckins.map((c) => `${c.emotionalState}/10`).join(", ")}
+Recent financial stress: ${userContext.recentCheckins.map((c) => `${c.financialStress}/10`).join(", ")}
+Current goals: ${userContext.currentGoals?.join(", ") || "None specified"}
+Family situation: ${userContext.familySituation || "Not specified"}
 
 Create a brief, actionable plan with:
 1. Main focus for today
@@ -74,20 +74,20 @@ Format as JSON:
 }`;
 
     try {
-      const response = await this.callClaude(prompt, 'haiku');
+      const response = await this.callClaude(prompt, "haiku");
       const result = JSON.parse(response);
-      
+
       return {
-        plan: result.plan || 'Focus on family well-being today',
-        focusAreas: result.focusAreas || ['parenting', 'finances'],
-        tips: result.tips || ['Take time for yourself', 'Review family budget']
+        plan: result.plan || "Focus on family well-being today",
+        focusAreas: result.focusAreas || ["parenting", "finances"],
+        tips: result.tips || ["Take time for yourself", "Review family budget"],
       };
     } catch (error) {
-      console.error('Plan generation error:', error);
+      console.error("Plan generation error:", error);
       return {
-        plan: 'Focus on family well-being and financial stability today',
-        focusAreas: ['parenting', 'finances'],
-        tips: ['Take time for yourself', 'Review family budget', 'Connect with your child']
+        plan: "Focus on family well-being and financial stability today",
+        focusAreas: ["parenting", "finances"],
+        tips: ["Take time for yourself", "Review family budget", "Connect with your child"],
       };
     }
   }
@@ -98,12 +98,12 @@ Format as JSON:
   async handleChat(message: string, userContext?: string): Promise<AIChatResponse> {
     // First evaluate complexity
     const complexity = await this.evaluateComplexity(message);
-    
+
     // Choose model based on complexity
-    const model = complexity.complexityScore <= 3 ? 'haiku' : 'sonnet';
-    
+    const model = complexity.complexityScore <= 3 ? "haiku" : "sonnet";
+
     const prompt = `You are Parently, an AI assistant for parents and family finances. 
-${userContext ? `Context: ${userContext}\n` : ''}
+${userContext ? `Context: ${userContext}\n` : ""}
 User message: "${message}"
 
 Provide a helpful, empathetic response that addresses parenting and/or financial concerns. 
@@ -111,18 +111,19 @@ Keep it concise but thorough.`;
 
     try {
       const response = await this.callClaude(prompt, model);
-      
+
       return {
         response,
         model,
-        complexityScore: complexity.complexityScore
+        complexityScore: complexity.complexityScore,
       };
     } catch (error) {
-      console.error('Chat handling error:', error);
+      console.error("Chat handling error:", error);
       return {
-        response: 'I apologize, but I\'m having trouble processing your request right now. Please try again in a moment.',
-        model: 'haiku',
-        complexityScore: 3
+        response:
+          "I apologize, but I'm having trouble processing your request right now. Please try again in a moment.",
+        model: "haiku",
+        complexityScore: 3,
       };
     }
   }
@@ -137,10 +138,10 @@ Keep it concise but thorough.`;
     const prompt = `Analyze this child-parent interaction data and provide insights for the parent:
 
 Child's recent messages:
-${data.childMessages.map(m => `- "${m.message}" (${m.timestamp})`).join('\n')}
+${data.childMessages.map((m) => `- "${m.message}" (${m.timestamp})`).join("\n")}
 
 Parent's recent check-ins:
-${data.parentCheckins.map(c => `- Emotional: ${c.emotionalState}/10, Financial stress: ${c.financialStress}/10 (${c.timestamp})`).join('\n')}
+${data.parentCheckins.map((c) => `- Emotional: ${c.emotionalState}/10, Financial stress: ${c.financialStress}/10 (${c.timestamp})`).join("\n")}
 
 Provide insights in JSON format:
 {
@@ -152,24 +153,24 @@ Provide insights in JSON format:
 }`;
 
     try {
-      const response = await this.callClaude(prompt, 'sonnet');
+      const response = await this.callClaude(prompt, "sonnet");
       const result = JSON.parse(response);
-      
+
       return {
-        summary: result.summary || 'Child appears to be doing well',
-        emotionalState: result.emotionalState || 'Stable',
+        summary: result.summary || "Child appears to be doing well",
+        emotionalState: result.emotionalState || "Stable",
         concerns: result.concerns || [],
         recommendations: result.recommendations || [],
-        suggestedActions: result.suggestedActions || []
+        suggestedActions: result.suggestedActions || [],
       };
     } catch (error) {
-      console.error('Child insights generation error:', error);
+      console.error("Child insights generation error:", error);
       return {
-        summary: 'Unable to generate insights at this time',
-        emotionalState: 'Unknown',
+        summary: "Unable to generate insights at this time",
+        emotionalState: "Unknown",
         concerns: [],
-        recommendations: ['Continue monitoring child\'s messages'],
-        suggestedActions: ['Check in with your child']
+        recommendations: ["Continue monitoring child's messages"],
+        suggestedActions: ["Check in with your child"],
       };
     }
   }
@@ -177,21 +178,21 @@ Provide insights in JSON format:
   /**
    * Make API call to Claude with retry logic
    */
-  private async callClaude(prompt: string, model: 'haiku' | 'sonnet'): Promise<string> {
+  private async callClaude(prompt: string, model: "haiku" | "sonnet"): Promise<string> {
     const modelMap = {
-      haiku: 'claude-3-haiku-20240307',
-      sonnet: 'claude-3-sonnet-20240229'
+      haiku: "claude-3-haiku-20240307",
+      sonnet: "claude-3-sonnet-20240229",
     };
 
     const payload = {
       model: modelMap[model],
-      max_tokens: model === 'haiku' ? 1000 : 2000,
+      max_tokens: model === "haiku" ? 1000 : 2000,
       messages: [
         {
-          role: 'user',
-          content: prompt
-        }
-      ]
+          role: "user",
+          content: prompt,
+        },
+      ],
     };
 
     let lastError: Error | null = null;
@@ -202,14 +203,14 @@ Provide insights in JSON format:
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
         const response = await fetch(this.baseUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.apiKey,
-            'anthropic-version': '2023-06-01'
+            "Content-Type": "application/json",
+            "x-api-key": this.apiKey,
+            "anthropic-version": "2023-06-01",
           },
           body: JSON.stringify(payload),
-          signal: controller.signal
+          signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
@@ -218,25 +219,26 @@ Provide insights in JSON format:
           throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
-        
+        const data = (await response.json()) as {
+          content?: Array<{ text?: string }>;
+        };
+
         if (!data.content || !data.content[0] || !data.content[0].text) {
-          throw new Error('Invalid response format from Claude API');
+          throw new Error("Invalid response format from Claude API");
         }
 
-        return data.content[0].text.trim();
-
+        return data.content[0].text!.trim();
       } catch (error) {
         lastError = error as Error;
         console.warn(`Claude API attempt ${attempt} failed:`, error);
-        
+
         if (attempt < this.maxRetries) {
           // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
         }
       }
     }
 
     throw new Error(`Claude API failed after ${this.maxRetries} attempts: ${lastError?.message}`);
   }
-} 
+}
