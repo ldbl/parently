@@ -71,9 +71,13 @@ wrangler kv:namespace create PARENTLY_CACHE
 
 ### 6. Configure Environment
 
-Update `wrangler.toml` with your actual values:
+Update `wrangler.toml` with your actual values, including the list of allowed CORS domains:
 
 ```toml
+[vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "http://localhost:3000"
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "parently-db"
@@ -84,10 +88,14 @@ binding = "CACHE"
 id = "your-actual-kv-namespace-id"
 
 [env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://your-production-domain.com"
 JWT_SECRET = "your-secure-jwt-secret"
 ENCRYPTION_KEY = "your-secure-encryption-key"
 ANTHROPIC_API_KEY = "your-anthropic-api-key"
 ```
+
+`ALLOWED_ORIGINS` accepts a comma-separated list of domains. Requests from origins not in this list will receive a `403` response.
 
 ### 7. Deploy
 
@@ -314,7 +322,7 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/api/v1/auth/register
 1. **Database Connection**: Ensure D1 database is created and migrations applied
 2. **KV Access**: Verify KV namespace exists and is properly configured
 3. **Environment Variables**: Check all required env vars are set in `wrangler.toml`
-4. **CORS Issues**: Verify CORS headers are properly set for your domain
+4. **CORS Issues**: Verify CORS headers are properly set for your domain and that it is included in `ALLOWED_ORIGINS`
 
 ### Debug Mode
 

@@ -3,11 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-[env.production]
-vars = { ENVIRONMENT = "production" }
-
-[env.staging]
-vars = { ENVIRONMENT = "staging" }
+[vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGINS = "http://localhost:3000"
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -28,11 +26,16 @@ binding = "CACHE"
 id = "your-staging-kv-namespace-id-here"
 
 [env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://your-production-domain.com"
 JWT_SECRET = "your-production-jwt-secret"
 ENCRYPTION_KEY = "your-production-encryption-key"
 ANTHROPIC_API_KEY = "your-anthropic-api-key"
 
 [env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://staging.your-domain.com,http://localhost:3000"
 JWT_SECRET = "your-staging-jwt-secret"
 ENCRYPTION_KEY = "your-staging-encryption-key"
-ANTHROPIC_API_KEY = "your-anthropic-api-key" 
+ANTHROPIC_API_KEY = "your-anthropic-api-key"
+
