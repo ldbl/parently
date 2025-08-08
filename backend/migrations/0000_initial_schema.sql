@@ -3,6 +3,7 @@ CREATE TABLE users (
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
     user_type TEXT NOT NULL CHECK (user_type IN ('parent', 'child')),
     parent_id TEXT REFERENCES users(id),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

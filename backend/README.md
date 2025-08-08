@@ -132,6 +132,7 @@ Content-Type: application/json
 {
   "email": "parent@example.com",
   "name": "John Doe",
+  "password": "strongpassword",
   "userType": "parent"
 }
 ```
@@ -142,7 +143,8 @@ POST /api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "parent@example.com"
+  "email": "parent@example.com",
+  "password": "strongpassword"
 }
 ```
 
