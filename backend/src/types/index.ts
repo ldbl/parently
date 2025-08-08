@@ -152,4 +152,5 @@ export interface Env {
   ENCRYPTION_KEY: string;
   ANTHROPIC_API_KEY: string;
   ENVIRONMENT: string;
-} 
+  ALLOWED_ORIGINS: string;
+}

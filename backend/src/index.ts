@@ -9,19 +9,40 @@ export default {
     // Create main router
     const router = Router();
 
-    // Add CORS headers
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+    // Determine CORS headers based on allowed origins
+    const origin = request.headers.get('Origin') || '';
+    const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(o => o.length > 0) || [];
+    const originAllowed = !origin || allowedOrigins.includes(origin);
+
+    const baseCorsHeaders = {
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     };
 
+    const corsHeaders = originAllowed && origin
+      ? { ...baseCorsHeaders, 'Access-Control-Allow-Origin': origin }
+      : baseCorsHeaders;
+
     // Handle preflight requests
     if (request.method === 'OPTIONS') {
+      if (!originAllowed) {
+        return new Response(null, { status: 403 });
+      }
       return new Response(null, {
         status: 200,
         headers: corsHeaders
+      });
+    }
+
+    // Reject requests from disallowed origins
+    if (!originAllowed) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Origin not allowed'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
       });
     }
 
@@ -145,4 +166,4 @@ export default {
       });
     }
   }
-}; 
+};
