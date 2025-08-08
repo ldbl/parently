@@ -14,31 +14,42 @@ export class RateLimitMiddleware {
     this.cache = cache;
   }
 
+  private getIdentifier(request: Request, identifier?: string): string | null {
+    if ((request as AuthenticatedRequest).user?.id) {
+      return (request as AuthenticatedRequest).user!.id;
+    }
+    if (identifier) return identifier;
+    const headerIp =
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for')?.split(',')[0];
+    return headerIp?.trim() || null;
+  }
+
   /**
-   * Check rate limit for user
+   * Check rate limit for user or identifier
    */
-  async checkRateLimit(request: AuthenticatedRequest, config: RateLimitConfig): Promise<boolean> {
-    if (!request.user) {
+  async checkRateLimit(request: Request, config: RateLimitConfig, identifier?: string): Promise<boolean> {
+    const id = this.getIdentifier(request, identifier);
+    if (!id) {
       throw new Error('Authentication required for rate limiting');
     }
 
-    const key = `rate_limit:${request.user.id}:${config.endpoint}`;
     const now = Date.now();
     const windowStart = now - config.windowMs;
 
     // Get current rate limit data
-    const rateLimitData = await this.cache.getRateLimit(request.user.id, config.endpoint);
-    
+    const rateLimitData = await this.cache.getRateLimit(id, config.endpoint);
+
     if (!rateLimitData) {
       // First request in this window
-      await this.cache.cacheRateLimit(request.user.id, config.endpoint, 1);
+      await this.cache.cacheRateLimit(id, config.endpoint, 1);
       return true;
     }
 
     // Check if we're in a new window
     if (rateLimitData.timestamp < windowStart) {
       // Reset for new window
-      await this.cache.cacheRateLimit(request.user.id, config.endpoint, 1);
+      await this.cache.cacheRateLimit(id, config.endpoint, 1);
       return true;
     }
 
@@ -48,23 +59,24 @@ export class RateLimitMiddleware {
     }
 
     // Increment count
-    await this.cache.cacheRateLimit(request.user.id, config.endpoint, rateLimitData.count + 1);
+    await this.cache.cacheRateLimit(id, config.endpoint, rateLimitData.count + 1);
     return true;
   }
 
   /**
-   * Get rate limit info for user
+   * Get rate limit info for user or identifier
    */
-  async getRateLimitInfo(request: AuthenticatedRequest, config: RateLimitConfig): Promise<{
+  async getRateLimitInfo(request: Request, config: RateLimitConfig, identifier?: string): Promise<{
     remaining: number;
     reset: number;
     limit: number;
   }> {
-    if (!request.user) {
+    const id = this.getIdentifier(request, identifier);
+    if (!id) {
       throw new Error('Authentication required for rate limiting');
     }
 
-    const rateLimitData = await this.cache.getRateLimit(request.user.id, config.endpoint);
+    const rateLimitData = await this.cache.getRateLimit(id, config.endpoint);
     const now = Date.now();
     const windowStart = now - config.windowMs;
 
@@ -128,7 +140,11 @@ export class RateLimitMiddleware {
   /**
    * Apply rate limiting middleware
    */
-  async applyRateLimit(request: AuthenticatedRequest, configType: keyof ReturnType<typeof RateLimitMiddleware.getConfigs>): Promise<void> {
+  async applyRateLimit(
+    request: Request,
+    configType: keyof ReturnType<typeof RateLimitMiddleware.getConfigs>,
+    identifier?: string
+  ): Promise<void> {
     const configs = RateLimitMiddleware.getConfigs();
     const config = configs[configType];
 
@@ -136,10 +152,10 @@ export class RateLimitMiddleware {
       throw new Error(`Unknown rate limit config: ${configType}`);
     }
 
-    const allowed = await this.checkRateLimit(request, config);
-    
+    const allowed = await this.checkRateLimit(request, config, identifier);
+
     if (!allowed) {
-      const info = await this.getRateLimitInfo(request, config);
+      const info = await this.getRateLimitInfo(request, config, identifier);
       throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((info.reset - Date.now()) / 1000)} seconds`);
     }
   }
