@@ -8,7 +8,11 @@
     "deploy": "wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply parently-db",
     "db:create": "wrangler d1 create parently-db",
-    "kv:create": "wrangler kv:namespace create PARENTLY_CACHE"
+    "kv:create": "wrangler kv:namespace create PARENTLY_CACHE",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20241120.0",
@@ -21,9 +25,16 @@
     "typescript": "^5.3.3",
     "wrangler": "^3.22.1",
     "@types/jsonwebtoken": "^9.0.5",
-    "@types/crypto-js": "^4.2.1"
+    "@types/crypto-js": "^4.2.1",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "prettier": "^3.2.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   }
-} 
+}
