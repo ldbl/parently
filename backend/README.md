@@ -274,7 +274,7 @@ Content-Type: application/json
 - **JWT Authentication**: Secure token-based authentication with refresh tokens
 - **AES Encryption**: All sensitive data (notes, messages) are encrypted
 - **Input Validation**: Zod schemas validate all input data
-- **Rate Limiting**: Prevents API abuse with configurable limits
+- **Rate Limiting**: Prevents API abuse with configurable limits (per user or IP)
 - **CORS**: Proper CORS headers for web client support
 
 ## 🚦 Rate Limits
@@ -283,7 +283,8 @@ Content-Type: application/json
 - **Check-ins**: 5 requests per minute
 - **Plan Generation**: 3 requests per 5 minutes
 - **Insights**: 2 requests per 10 minutes
-- **General API**: 30 requests per minute
+- **General API**: 30 requests per minute (per user or IP for unauthenticated requests)
+  - Includes `/auth` endpoints which fall back to IP-based tracking when no user is present
 
 ## 💰 Monetization Strategy
 

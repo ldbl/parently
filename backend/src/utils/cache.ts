@@ -112,17 +112,19 @@ export class CacheService {
 
   /**
    * Cache rate limit data
+   * @param identifier User ID or IP address
    */
-  async cacheRateLimit(userId: string, endpoint: string, count: number): Promise<void> {
-    const key = this.generateKey('rate_limit', userId, endpoint);
+  async cacheRateLimit(identifier: string, endpoint: string, count: number): Promise<void> {
+    const key = this.generateKey('rate_limit', identifier, endpoint);
     await this.set(key, { count, timestamp: Date.now() }, 60); // 1 minute
   }
 
   /**
    * Get rate limit data
+   * @param identifier User ID or IP address
    */
-  async getRateLimit(userId: string, endpoint: string): Promise<{ count: number; timestamp: number } | null> {
-    const key = this.generateKey('rate_limit', userId, endpoint);
+  async getRateLimit(identifier: string, endpoint: string): Promise<{ count: number; timestamp: number } | null> {
+    const key = this.generateKey('rate_limit', identifier, endpoint);
     return this.get(key);
   }
 
